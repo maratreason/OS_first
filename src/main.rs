@@ -18,6 +18,3 @@ pub extern "C" fn _start() -> ! {
 
     loop {}
 }
-
-// Урок 3. 46:00.
-// https://www.youtube.com/watch?v=DA2zIAkE26Q&list=PLib6-zlkjfXkdCjQgrZhmfJOWBk_C2FTY&index=3
