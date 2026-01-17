@@ -1,5 +1,7 @@
-use core::fmt::{Write, Result};
+use core::fmt::{self, Result, Write};
 use volatile::Volatile;
+use lazy_static::lazy_static;
+use spin::Mutex;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,6 +56,14 @@ pub struct Writer {
     buffer: &'static mut Buffer,
 }
 
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::Yellow, Color::Black),
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+    });
+}
+
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
@@ -93,6 +103,7 @@ impl Writer {
             ascii_character: b' ',
             color_code: self.color_code,
         };
+
         for col in 0..BUFFER_WIDTH {
             self.buffer.chars[row][col].write(blank);
         }
@@ -115,15 +126,18 @@ impl Write for Writer {
     }
 }
 
-pub fn print_something() {
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
 
-    writer.write_byte(b'H');
-    writer.write_string("ello ");
-    writer.write_string("Wörld! ");
-    write!(writer, "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    WRITER.lock().write_fmt(args).unwrap();
 }

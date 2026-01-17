@@ -6,16 +6,18 @@ mod vga_buffer;
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    vga_buffer::print_something();
+    println!("Hello World{}", 1);
+    panic!("Some panic message");
 
     loop {}
 }
 
-// Урок 3. 31:00.
+// Урок 3. 46:00.
 // https://www.youtube.com/watch?v=DA2zIAkE26Q&list=PLib6-zlkjfXkdCjQgrZhmfJOWBk_C2FTY&index=3
